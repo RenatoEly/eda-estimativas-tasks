@@ -75,6 +75,59 @@ por_time = estimativas_raw %>%
 
 ## Qual a relação entre as estimativas e horas reais tomadas na empresa como um todo e em diferentes categorias de tarefa?
 
+```{r}
+ggplot(estimativas, aes(x=HoursEstimate, y=HoursActual)) + 
+    geom_point() +
+    labs(title = 'Expectativa X Realidade',
+         x = 'Estimativa (h)',
+         y = 'Realidade (h)')
+
+cor(estimativas$HoursEstimate, estimativas$HoursActual, method = 'spearman')
+cor(estimativas$HoursEstimate, estimativas$HoursActual, method = 'kendall')
+cor(estimativas$HoursEstimate, estimativas$HoursActual, method = 'pearson')
+```
+
+É possível observar que existe uma concentração de pontos com estimativa até 200 horas e com tempo real gasto menor que 500 horas, tornando difícil de visualizar alguma relação existente nos dados, porém ao observar a correlação entre as duas variáveis percebemos uma correlação de spearman alta, mas com uma correlação de pearson baixa. Para continuar a análise foram retirados os pontos fora da faixa citada anteriormente.
+
+```{r}
+estimativas_s_outlier = estimativas %>% filter(HoursActual < 500, HoursEstimate < 200)
+
+ggplot(estimativas_s_outlier, aes(x=HoursEstimate, y=HoursActual)) + 
+    geom_point() +
+    labs(title = 'Expectativa X Realidade',
+         x = 'Estimativa (h)',
+         y = 'Realidade (h)')
+
+cor(estimativas_s_outlier$HoursEstimate, estimativas_s_outlier$HoursActual, method = 'spearman')
+cor(estimativas_s_outlier$HoursEstimate, estimativas_s_outlier$HoursActual, method = 'kendall')
+cor(estimativas_s_outlier$HoursEstimate, estimativas_s_outlier$HoursActual, method = 'pearson')
+```
+
+Ao considerar apenas esta região os valores de correlação de spearman e kendall praticamente não se alteram, porém a correlação de pearson almenta consideravelmente.
 
 ## Equipes com mais desenvolvedores produzem estimativas com mais ou menos erro que equipes menores? 
 
+```{r}
+por_time = por_time %>% select(devs, erro_medio_abs, estimativas)
+
+por_time %>% ggplot(aes(x=erro_medio_abs, y=devs)) +
+  geom_point() +
+  labs(title = "", x="Erro médio (Realidade - Estimativa)(h)",y="Tamanho da equipe")
+```
+
+```{r}
+por_time %>% cor(method = 'spearman')
+por_time %>% cor(method = 'kendall')
+por_time %>% cor(method = 'pearson')
+```
+
+Para as três métodos de correlação não foram encontrados valores significativos para a correlação entre erro nas equipes e o tamanho da equipe, porém existe uma correlação alta entre o valor das estimativas e o tamanho da equipe, uma hipótese para esse resultado é que tarefas que levam mais tempo são mais complexas e por serem complexas demandam mais contribuidores.
+
+```{r}
+por_time %>% ggplot(aes(x=devs, y=estimativas)) +
+  geom_point() +
+  stat_function(fun=function(x)2^x/13, geom="line", aes(colour="1.3*log2(x)"))+
+  labs(title = "", y="Estimativa (h)",x="Tamanho da equipe")
+```
+
+Acima percebemos que a distribuição do valor das estimativas por tamanho da equipe se assemelha com uma distribuição exponencial.
